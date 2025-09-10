@@ -27,7 +27,8 @@ INSERT INTO cursos (nome, aulas) VALUES ('CSS', 12);
 /* 
 as aspas simples são usadas exclusivamente para strings.END TRANSACTION
 
-as aspas duplas são usadas exclusivamente para identificadores como nomes de colunas ou tabelas
+as aspas duplas são usadas exclusivamente para identificadores como nomes de colunas ou tabelas 
+(no MySQL é usado as aspas invertidas `...`)
 
 os números são definidos sem aspas.
 */

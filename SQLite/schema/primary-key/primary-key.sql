@@ -18,7 +18,10 @@ VALUES
     ('HTML', 1000);
 
 
-/* O primary key basicamente já cria um valor INTEGER ou TEXT (dependendo do que for colocado) e auto-incrementa, caso não haja um valor inicial especificado, será iniciado com 1, os valores posteriores serão sempre o incremento do ultimo valor adicionado na tabela */
+/* O primary key basicamente já cria um valor INTEGER ou TEXT (dependendo do que for colocado) e auto-incrementa, caso não haja um valor inicial especificado, será iniciado com 1, os valores posteriores serão sempre o incremento do ultimo valor adicionado na tabela 
+
+No MySQL, não é auto-incrementado. Precisa colocar o AUTO_INCREMENT
+*/
 
 
 /* RowId */
