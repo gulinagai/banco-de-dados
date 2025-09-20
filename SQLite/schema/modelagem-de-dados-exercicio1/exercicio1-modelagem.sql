@@ -36,14 +36,19 @@ CREATE TABLE "users" (
     "id" INTEGER PRIMARY KEY,
     "name" TEXT NOT NULL, 
     "password" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "created" TEXT DEFAULT CURRENT_TIMESTAMP
+    "email" TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    "created" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) STRICT;
 
 INSERT INTO "users"
     ("id", "name", "password", "email", "created")
 VALUES
      (42, 'André', 'senha123', 'andre@email.com', '2049-06-14 12:34:56');
+
+INSERT INTO "users"
+    ("id", "name", "password", "email")
+VALUES
+     (12, 'Guli', 'xdd123', 'guli@email.com');
 
 DELETE FROM "users";
 
@@ -61,12 +66,12 @@ DROP TABLE "courses";
 
 CREATE TABLE "courses" (
     "id" INTEGER PRIMARY KEY,
-    "slug" TEXT UNIQUE NOT NULL,
+    "slug" TEXT NOT NULL COLLATE NOCASE UNIQUE,
     "title" TEXT NOT NULL,
-    "description" TEXT,
+    "description" TEXT NOT NULL,
     "aulas" INTEGER NOT NULL,
     "horas" INTEGER NOT NULL,
-    "created" TEXT DEFAULT CURRENT_TIMESTAMP
+    "created" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) STRICT;
 
 INSERT INTO "courses"
@@ -107,8 +112,8 @@ DROP TABLE lessons;
 
 CREATE TABLE "lessons" (
     "id" INTEGER PRIMARY KEY,
-    "course_id" INTEGER,
-    "slug" TEXT NOT NULL,
+    "course_id" INTEGER NOT NULL,
+    "slug" TEXT NOT NULL COLLATE NOCASE,
     "title" TEXT NOT NULL,
     "materia" TEXT NOT NULL,
     "materia_slug" TEXT NOT NULL,
@@ -136,7 +141,7 @@ VALUES
 INSERT INTO "lessons"
     ("id", "course_id", "slug", "title", "materia", "materia_slug", "seconds", "video", "description", "lesson_order", "free", "created")
 VALUES 
-    (103, 2, 'apresentacao-curso', 'Apresentação do Curso', 'Informações Iniciais', 'informacoes-inicias', 520, 'apresentacao.mp4', 'Apresentação Inicial do Curso', 2, 1, '2049-06-14 12:35:10');
+    (104, 1, 'apresentacao-curso', 'Apresentação do Curso', 'Informações Iniciais', 'informacoes-inicias', 520, 'apresentacao.mp4', 'Apresentação Inicial do Curso', 2, 1, '2049-06-14 12:35:10');
 
 DROP TABLE "lessons";
 
@@ -149,12 +154,13 @@ DROP TABLE "lessons";
 -- }
 
 CREATE TABLE "lessons_completed" (
-    "user_id" INTEGER,
-    "course_id" INTEGER,
-    "lesson_id" INTEGER,
+    "user_id" INTEGER NOT NULL,
+    "course_id" INTEGER NOT NULL,
+    "lesson_id" INTEGER NOT NULL, 
     "completed" TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("user_id") REFERENCES "users" ("id")
-    FOREIGN KEY ("course_id") REFERENCES "courses" ("id")
+    PRIMARY KEY("user_id", "course_id", "lesson_id")
+    FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
+    FOREIGN KEY ("course_id") REFERENCES "courses" ("id") 
     FOREIGN KEY ("lesson_id") REFERENCES "lessons" ("id")
 ) STRICT;
 
@@ -175,9 +181,9 @@ CREATE TABLE "certificates" (
     "id" TEXT PRIMARY KEY,
     "user_id" INTEGER NOT NULL,
     "course_id" INTEGER NOT NULL,
-    "completed" TEXT DEFAULT CURRENT_TIMESTAMP,
+    "completed" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE ("user_id", "course_id"),
-    FOREIGN KEY ("user_id") REFERENCES "users" ("id"),
+    FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("course_id") REFERENCES "courses" ("id")
 ) STRICT;
 
