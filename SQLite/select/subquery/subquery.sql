@@ -1,5 +1,12 @@
 --database: ./db.sqlite
 
+/*
+    Subquery
+
+    Devem ser escritas entre parênteses e o seu resultado será usado para compor a query principal.
+    o resultado de uma tabela é usado para fazer outro select
+*/
+
 CREATE TABLE "produtos" (
   "id" INTEGER PRIMARY KEY,
   "nome" TEXT NOT NULL,
@@ -36,59 +43,19 @@ INSERT INTO "produtos" ("nome","categoria","preco","taxa_importacao","estoque","
 ('Câmera de Ação 4K','video',89900,7000,45,0,'2049-11-21 13:56:12'),
 ('Roteador WiFi 6E','rede',64900,0,75,0,'2049-12-06 11:11:11');
 
-/*
-    ORDER BY
-Ordena os resultados de uma consulta.
 
-*/
+-- usando o select no WHERE, esse primeiro select geralmente usado para selecionar um valor único, como uma média, um id, para depois selecionar outra coisa usando esse dado:
+SELECT * FROM "produtos"
+WHERE "preco" > (SELECT AVG("preco") FROM "produtos");
 
--- ASC (ascendente) é o padrão no ORDER BY
-SELECT * FROM "produtos" ORDER BY "preco" ASC;
-SELECT * FROM "produtos" ORDER BY "preco" DESC;
+SELECT AVG("preco") FROM "produtos";
 
--- primeiro ordena por categoria, e em situações que forem a mesma categoria, ordena por preço
-SELECT * FROM "produtos" ORDER BY "categoria" ASC, "preco" ASC;
+SELECT * FROM "lessons"
+WHERE "course_id" = (
+  SELECT "id" FROM "courses" WHERE "slug" = 'javascript-basico'
+);
 
--- ordena por data
-SELECT * FROM "produtos" ORDER BY "criado";
-
-
-/*
-    GROUP BY
-Agrupa os resultados de uma consulta, normalmente para mostrar a soma, a média, a contagem dos valores dos registros de um determinado grupo, esse grupo seria um outro valor de um campo da tabela, que se repete, como: categoria por exemplo.
-*/
-
-SELECT "categoria", COUNT(*) AS "total" FROM "produtos" GROUP BY "categoria";
-SELECT "categoria", AVG("preco") AS "preco_medio" FROM "produtos" GROUP BY "categoria";
-
-SELECT "categoria", COUNT(*) AS "total_por_categoria" FROM "produtos" GROUP BY "categoria" LIMIT 3;
-
--- GROUP BY e ORDER BY juntos
-SELECT "categoria", COUNT(*) AS "total_por_categoria"
-FROM "produtos" GROUP BY "categoria" ORDER BY "total_por_categoria" DESC;
-
---- Agrupar por ANO
-SELECT STRFTIME('%Y', "criado") AS "ano", COUNT(*) AS "total"
-FROM "produtos" GROUP BY "ano";
-
-
-SELECT STRFTIME('%Y', "criado") AS "ano", COUNT(*) AS "total_por_ano" FROM "produtos" GROUP BY "ano";
-
-/*
-    HAVING
-Filtra os resultados de uma consulta após o agrupamento. O HAVING funciona como o WHERE após o GROUP BY.
-
-é literalmente o WHERE, mas quando se usa um GROUP BY.
-com WHERE não funcionaria.
-*/
-
-SELECT "categoria", COUNT(*) AS "total_por_categoria"
-FROM "produtos" GROUP BY "categoria"
-HAVING "total_por_categoria" > 1 ORDER BY "total_por_categoria";
-
-SELECT "categoria", AVG("preco") AS "preco_medio"
-FROM "produtos" GROUP BY "categoria"
-HAVING "preco_medio" > 70000;
+-- usando select no FROM, usará a tabela gerada do 1º select como base:
 
 SELECT "total_por_categoria", COUNT(*) AS "total_grupos_com_mesma_qtd" FROM (
     SELECT "categoria", COUNT(*) AS "total_por_categoria" FROM "produtos" GROUP BY "categoria"
@@ -96,7 +63,4 @@ SELECT "total_por_categoria", COUNT(*) AS "total_grupos_com_mesma_qtd" FROM (
 
 
 SELECT "categoria", COUNT(*) AS "total_por_categoria" FROM "produtos" GROUP BY "categoria";
-
--- isso é SUBQUERY, será visto mais a frente
--- mas para entendimento, a select de dentro praticamente vira uma nova tabela na qual o select externo irá fazer a consulta!
 
