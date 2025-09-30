@@ -64,3 +64,18 @@ SELECT "total_por_categoria", COUNT(*) AS "total_grupos_com_mesma_qtd" FROM (
 
 SELECT "categoria", COUNT(*) AS "total_por_categoria" FROM "produtos" GROUP BY "categoria";
 
+
+
+
+/*
+    WITH AS
+    Cria uma "subquery nomeada" (CTE - Common Table Expression), que pode ser referenciada na query principal. Em outras palavras, cria uma tabela temporária.
+*/
+
+WITH "preco_medio" AS (
+  SELECT AVG("preco") AS "media" FROM "produtos"
+)
+SELECT * FROM "produtos"
+WHERE "preco" > (SELECT "media" FROM "preco_medio");
+
+
