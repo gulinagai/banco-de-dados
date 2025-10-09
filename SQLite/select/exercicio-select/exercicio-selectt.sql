@@ -1,64 +1,5 @@
 --database: ./db.sqlite
 
-/*
-    JOIN
-
-    o JOIN retorna os registros que atendem a condição passada depois do ON.
-
-Agrega dados de duas ou mais tabelas com base em uma condição. O padrão do JOIN é o INNER JOIN, que retorna apenas as linhas que têm correspondência em ambas as tabelas.
-
-Pode usar JOIN, INNER JOIN ou apenas a vírgula ',', todos são a mesma coisa.
-*/
-
-SELECT * FROM "lessons_completed"
-JOIN "users" ON "lessons_completed"."user_id" = "users"."id";
-
-SELECT "users"."name", "lessons_completed"."lesson_id" FROM "lessons_completed"
-JOIN "users" ON "lessons_completed"."user_id" = "users"."id";
-
-SELECT "u"."name", "lc"."lesson_id" FROM "lessons_completed" AS "lc"
-JOIN "users" AS "u" ON "lc"."user_id" = "u"."id";
-
-
-
-
-
-/*
-    usar o AS para alterar o nome das tabelas é uma boa prática e deixa a leitura menos poluida. 
-*/
-
-/*
-    Múltiplos JOINs
-    
-    Podemos fazer múltiplos JOINs para agregar dados de várias tabelas. Se o nome da coluna for o mesmo em ambas as tabelas, é necessário usar um alias AS.
-*/
-
-SELECT "u"."name", "l"."title" AS "lesson_title", "c"."title" AS "course_title"
-FROM "lessons_completed" AS "lc"
-JOIN "users" AS "u" ON "lc"."user_id" = "u"."id"
-JOIN "lessons" AS "l" ON "lc"."lesson_id" = "l"."id"
-JOIN "courses" AS "c" ON "lc"."course_id" = "c"."id"
-WHERE "u"."email" = 'carlos@email.com' AND "c"."slug" = 'html-para-iniciantes';
-
-
--- O LEFT JOIN retorna todas as linhas da tabela à esquerda lessons e as correspondências da tabela à direita lessons_completed. Se não houver correspondência, os valores da tabela à direita serão NULL.
-
-SELECT "lc"."user_id", "l"."title", "lc"."completed"
-FROM "lessons" AS "l"
-LEFT JOIN "lessons_completed" AS "lc"
-ON "lc"."lesson_id" = "l"."id" AND "lc"."user_id" = 1;
-
-
--- O SELF JOIN é um JOIN de uma tabela consigo mesma. É útil para comparar linhas dentro da mesma tabela e encontrar valores duplicados.
-
-SELECT "a"."id", "a"."slug"
-FROM "lessons" AS "a"
-JOIN "lessons" AS "b" ON "a"."slug" = "b"."slug"
-WHERE "a"."id" != "b"."id";
-
-
-
-
 CREATE TABLE "users" (
   "id" INTEGER PRIMARY KEY,
   "name" TEXT NOT NULL,
@@ -153,8 +94,6 @@ CREATE TABLE "lessons_completed" (
   FOREIGN KEY ("course_id") REFERENCES "courses" ("id"),
   FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE
 ) STRICT;
-
-SELECT * FROM "lessons_completed" JOIN "users" ON "lessons_completed"."user_id" = "users"."id";
 
 
 INSERT INTO "lessons_completed" ("user_id","course_id","lesson_id","completed")
@@ -292,5 +231,91 @@ VALUES
 ('fpsyspuw',9,2,'2049-03-12 12:30:00'),
 ('s8jjeccz',10,3,'2049-04-11 13:30:00'),
 ('zr5qee0t',10,4,'2049-04-12 13:30:00');
+
+
+
+
+
+-- SELECT EXERCÍCIO
+
+-- Utilizando as tabelas de cursos da aula anterior, faça as seguintes consultas:
+
+-- 1 -  Selecione todas as aulas do curso html-para-iniciantes e ordene por lesson-ordem em ordem crescente
+
+SELECT * FROM "courses";
+SELECT * FROM "lessons";
+
+SELECT "title" FROM "lessons" WHERE "course_id" = 1 ORDER BY "lesson_order" ASC;
+
+SELECT "lessons"."title", "courses"."slug" FROM "lessons" JOIN "courses" ON "lessons"."course_id" = "courses"."id" AND "courses"."slug" = 'html-para-iniciantes' ORDER BY "lesson_order" ASC;
+
+SELECT "title" FROM "lessons" WHERE "course_id" = (
+  SELECT "id" FROM "courses" WHERE "slug" = 'html-para-iniciantes'
+)
+ORDER BY "lesson_order" ASC;
+
+
+--2 - Somar o total de segundos das aulas do curso de css-animacoes.
+
+SELECT * FROM lessons;
+
+SELECT SUM("seconds") AS "total_segundos" FROM "lessons" JOIN "courses" ON "lessons"."course_id" = "courses"."id" AND "courses"."slug" = 'css-animacoes';
+
+--3 - Contar o total de aulas e agrupar por curso
+
+SELECT "courses"."slug", COUNT("lessons"."id") AS "total_aulas" FROM "lessons" JOIN "courses" ON "courses"."id" = "lessons"."course_id" GROUP BY "courses"."slug";
+
+--4 - Somar o total de segundos das aulas, agrupar por curso e ordenar o total de segundos por ordem decrescente
+
+SELECT "courses"."id", "courses"."title", SUM("lessons"."seconds") AS "total_segundos" FROM "lessons" JOIN "courses" ON "courses"."id" = "lessons"."course_id" GROUP BY "courses"."id" ORDER BY "total_segundos" DESC;
+
+SELECT * FROM "courses";
+
+--5- Utilize a query 4, e filtre apenas os cursos que possuem mais de 2300 segundos de aulas. Continue ordenando.
+
+SELECT * FROM 
+(SELECT "courses"."id", "courses"."title", SUM("lessons"."seconds") AS "total_segundos" FROM "lessons" JOIN "courses" ON "courses"."id" = "lessons"."course_id" GROUP BY "courses"."id" ORDER BY "total_segundos" DESC)
+WHERE total_segundos > 2300;
+
+SELECT "courses"."id", "courses"."title", SUM("lessons"."seconds") AS "total_segundos" FROM "lessons" JOIN "courses" ON "courses"."id" = "lessons"."course_id" GROUP BY "courses"."id" HAVING "total_segundos" > 2300 ORDER BY "total_segundos" DESC;
+
+--6 - Utilize a query 4, mostre o título do curso no lugar do course_id
+
+SELECT "courses"."title", SUM("lessons"."seconds") AS "total_segundos" FROM "lessons" JOIN "courses" ON "courses"."id" = "lessons"."course_id" GROUP BY "courses"."id" ORDER BY "total_segundos" DESC;
+
+--7 - Selecione o ID dos certificados de mariana@email.com
+
+SELECT * FROM "certificates";
+
+SELECT "users"."name", "users"."email", "certificates"."id" FROM "certificates" JOIN "users" ON "users"."id" = "certificates".user_id AND "users"."email" = 'mariana@email.com';
+
+--8 - Selecione todas as aulas completas ou não pelo usuário lucas@email.com. Mostre o título da aula e se está completa ou não
+
+SELECT "users"."name", "lessons"."title",
+CASE 
+    WHEN lessons_completed.lesson_id IS NOT NULL THEN 'Completa'
+    ELSE 'Não completa'
+  END AS status_aula
+FROM "lessons_completed" 
+JOIN "users" 
+ON "lessons_completed"."user_id" = "users"."id"
+AND "users"."email" = 'lucas@email.com'
+RIGHT JOIN "lessons" ON "lessons"."id" = "lessons_completed"."lesson_id";
+
+
+--9 - Selecione as aulas anterior/próxima da aula funcoes-e-escopo. Retorne 3 aulas (se existirem): a anterior, a atual e a próxima. Utilize o lesson_order para isso.
+
+
+SELECT * FROM "lessons"
+WHERE (
+  "lesson_order" = 
+  (SELECT "lesson_order" FROM "lessons" WHERE "slug" = 'funcoes-e-escopo') OR 
+  "lesson_order" =
+  (SELECT "lesson_order" FROM "lessons" WHERE "lesson_order" = (SELECT "lesson_order" FROM "lessons" WHERE "slug" = 'funcoes-e-escopo') + 1) OR 
+  "lesson_order" = 
+  (SELECT "lesson_order" FROM "lessons" WHERE "lesson_order" = (SELECT "lesson_order" FROM "lessons" WHERE "slug" = 'funcoes-e-escopo') - 1)
+  )
+  AND "course_id" = (SELECT "course_id" FROM "lessons" WHERE "slug" = 'funcoes-e-escopo')
+  ORDER BY "lesson_order";
 
 
