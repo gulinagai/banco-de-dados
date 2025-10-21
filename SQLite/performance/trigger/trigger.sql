@@ -146,6 +146,13 @@ values
 SELECT * FROM "certificates";
 
 
+-- DELETAR TRIGGER:
+
+-- também podemos deletar uma trigger com:
+
+DROP TRIGGER "trg_users_insert";
+
+
 
 
 
