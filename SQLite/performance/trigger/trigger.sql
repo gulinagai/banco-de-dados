@@ -17,6 +17,8 @@ VALUES
   ('user_count', (SELECT COUNT(*) FROM "users"));
 
 -- Cria um trigger que atualiza a contagem de usuários na tabela stats
+
+-- TRIGGER para ativar na inserção de um registro
 CREATE TRIGGER "trg_users_insert"
 AFTER INSERT ON "users"
 BEGIN
@@ -26,7 +28,25 @@ END;
 
 INSERT INTO "users" ("name","password","email","created")
 VALUES
-('Guli Nagai','7654321','guli@email.com', CURRENT_TIMESTAMP);
+('Hanna','7236542134321','hanna@email.com', CURRENT_TIMESTAMP);
+
+-- para visualizar todas as triggers:
+
+SELECT * FROM "sqlite_schema" WHERE "type" = 'trigger';
+
+SELECT * FROM "users";
+SELECT * FROM "stats";
+
+DELETE FROM "users"
+WHERE "id" = 3;
+
+--TRIGGER para ativar no delete de um registro:
+CREATE TRIGGER "trg_users_delete"
+AFTER DELETE ON "users"
+BEGIN
+  UPDATE "stats" SET "value" = "value" - 1
+  WHERE "name" = 'user_count';
+END;
 
 -- O interessante é que dentro da Trigger, existe o acesso tanto ao novo dado que está sendo colocado, quanto do dado antigo, no caso de um update por exemplo
 
@@ -38,6 +58,92 @@ VALUES
 
 
 
+-- UPDATE OF
+
+-- Podemos disparar o trigger quando uma coluna específica é alterada (e não um registro inteiro), usando UPDATE OF.
+
+
+CREATE TABLE "user_changes" (
+  "id" INTEGER PRIMARY KEY,
+  "user_id" INTEGER NOT NULL,
+  "old_email" TEXT NOT NULL,
+  "new_email" TEXT NOT NULL,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
+
+CREATE TRIGGER "trg_log_email_change"
+BEFORE UPDATE OF "email" ON "users"                
+WHEN lower(OLD."email") <> lower(NEW."email")           
+BEGIN                                                   
+  INSERT INTO "user_changes" ("user_id", "old_email", "new_email")
+  VALUES (OLD."id", OLD."email", NEW."email");
+END;
+
+-- explicando:
+
+-- <> é diferente, mesma coisa que !=
+-- lower() é uma função nativa do sgbd, para deixar tudo em minúsculo
+-- BEFORE pq eu quero realizar isso antes da atualização da coluna acontecer, porque quero ter acesso ao OLD
+-- OLD.campo é valor antigo, que estava registrado
+-- NEW.campo é o novo valor, que vai substituir o antigo, depois do update
+
+UPDATE "users" SET "email" = 'novo.email@example.com' WHERE "id" = 1;
+
+SELECT * FROM "user_changes";
+
+
+
+-- Pode-se também ter Triggers mais complexos:
+
+SELECT COUNT(*) FROM "lessons_completed"
+WHERE "user_id" = 1 AND "course_id" = 1;
+
+SELECT COUNT(*) FROM "lessons"
+WHERE "course_id" = 1;
+
+CREATE TRIGGER "trg_create_certificate"
+AFTER INSERT ON "lessons_completed"
+WHEN (
+  (SELECT COUNT(*) FROM "lessons_completed"              
+   WHERE "user_id" = NEW."user_id" AND "course_id" = NEW."course_id") -- subquery 1
+  =
+  (SELECT COUNT(*) FROM "lessons"             -- subquery 2
+   WHERE "course_id" = NEW."course_id")
+) 
+BEGIN
+  INSERT OR IGNORE INTO "certificates" ("id", "user_id", "course_id")
+  VALUES (lower(hex(randomblob(16))), NEW."user_id", NEW."course_id");
+END;
+
+-- explicando:
+
+-- subquery 1: para obter a contagem de lições completas, onde o usupario os usuários batem e os cursos batem
+
+-- subquery 2: para obter a contagem de lições de um curso específico, onde esse curso bate com o curso que está no registro que está fazendo insert
+
+-- comparação dentro do WHEN: verifica se ambos os valores batem, se bater, quer dizer que o usuario completou todas as lições desse curso, e pode-se gerar um novo certificado, que é a ideia da criação desse trigger
+
+-- (lower(hex(randomblob(16))): são várias funções nativas dentro de funções: 
+-- ele gera um número randômico 
+-- pega esse número e coloca em base hexadecimal, para não ficar com caracteres especiais (apenas A-F 0-9)
+-- pega esse número e coloca em mínusculo tudo.
+
+DELETE FROM "users" WHERE "name" = 'Guli Nagai';
+SELECT * FROM "users";
+
+INSERT INTO "users" ("name", "password", "email") VALUES ('andre', '1234567', 'andre@email.com');
+
+INSERT INTO "lessons_completed"
+  ("user_id", "course_id", "lesson_id")
+values
+  (13, 1, 1),
+  (13, 1, 2),
+  (13, 1, 3),
+  (13, 1, 4),
+  (13, 1, 5);
+
+
+SELECT * FROM "certificates";
 
 
 
